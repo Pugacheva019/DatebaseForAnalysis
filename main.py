@@ -8,7 +8,7 @@ import os.path
 import tkinter
 from tkinter import *
 
-browser = webdriver.Chrome("/Users/anna/PycharmProjects/pythonProject/chromedriver")
+browser = webdriver.Chrome("...")
 
 
 # метод входа в инстаграмм
@@ -16,32 +16,12 @@ def SingInInstagram():
     browser.get("https://www.instagram.com/accounts/login")
     time.sleep(5)
     browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div["
-                                  "1]/div/label/input").send_keys("ancka019")
+                                  "1]/div/label/input").send_keys("login")
     browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div["
-                                  "2]/div/label/input").send_keys("Afder76.")
+                                  "2]/div/label/input").send_keys("passport")
     browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div[3]").click()
     time.sleep(4)
     return 0
-
-
-# метод входа в яндекс
-def SingInYandex():
-    browser.get("https://disk.yandex.ru/")
-    browser.find_element_by_xpath("/html/body/div[1]/div/div/div[2]/a[2]").click()
-    browser.find_element_by_xpath("/html/body/div/div/div/div[2]/div/div/div[2]/div[3]/div/div/div[1]/form/div["
-                                  "1]/span/input").send_keys("ancka019")
-    browser.find_element_by_xpath("/html/body/div/div/div/div[2]/div/div/div[2]/div[3]/div/div/div[1]/form/div["
-                                  "3]/button").click()
-    time.sleep(2)
-    browser.find_element_by_xpath(
-        "/html/body/div/div/div/div[2]/div/div/div[2]/div[3]/div/div[1]/form/div[3]/button").click()
-    time.sleep(2)
-    browser.find_element_by_xpath("/html/body/div/div/div/div[2]/div/div/div[2]/div[3]/div/div[1]/form/div["
-                                  "2]/div/span/input").send_keys("afder76.")
-    browser.find_element_by_xpath(
-        "/html/body/div/div/div/div[2]/div/div/div[2]/div[3]/div/div[1]/form/div[3]/button").click()
-    time.sleep(2)
-    browser.find_element_by_xpath("/html/body/div[1]/div/div[4]/div[2]/div/div[3]/div/div[1]").click()
 
 
 # метод составление списка подписчиков
