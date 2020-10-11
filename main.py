@@ -5,8 +5,23 @@ import requests
 import xlwt
 import pandas
 import os.path
+import tkinter
+from tkinter import *
+from PyQt5.QtCore import Qt
+from PyQt5 import QtCore, QtGui, QtWidgets
+import sys
+from DataSet import Ui_Dialog
+options = webdriver.ChromeOptions()
+options.set_headless(True)
+browser = webdriver.Chrome("/Users/anna/PycharmProjects/pythonProject/chromedriver", options=options)
 
-browser = webdriver.Chrome("...")
+# front-end
+
+app = QtWidgets.QApplication(sys.argv)
+Dialog = QtWidgets.QDialog()
+ui: Ui_Dialog = Ui_Dialog()
+ui.setupUi(Dialog)
+Dialog.show()
 
 
 # метод входа в инстаграмм
@@ -14,16 +29,17 @@ def SingInInstagram():
     browser.get("https://www.instagram.com/accounts/login")
     time.sleep(5)
     browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div["
-                                  "1]/div/label/input").send_keys("login")
+                                  "1]/div/label/input").send_keys("ancka019")
     browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div["
-                                  "2]/div/label/input").send_keys("passport")
+                                  "2]/div/label/input").send_keys("Afder76.")
     browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div[3]").click()
     time.sleep(4)
     return 0
 
 
 # метод составление списка подписчиков
-def GetFollowers(user_name):
+def GetFollowers():
+    user_name = ui.textEdit.toPlainText()
     browser.get("https://www.instagram.com/" + user_name)
     time.sleep(4)
     file_name = user_name
@@ -141,6 +157,8 @@ def GetFollowing(user_name):
 
 # метод собирания ссылок на посты пользователя
 def PutPosts(user_name):
+    SingInInstagram()
+    user_name = ui.textEdit.toPlainText()
     file_name = user_name
     if os.path.exists(f"{file_name}"):  # создаем папку пользователя
         print("Папка уже существует!")
@@ -188,7 +206,8 @@ def PutPosts(user_name):
 
 
 # метод скачивания публикаций
-def DownLoaderFile(user_name):
+def DownLoaderFile():
+    user_name = ui.textEdit.toPlainText()
     PutPosts(user_name)
     file_name = user_name
     time.sleep(4)
@@ -241,7 +260,9 @@ def DownLoaderFile(user_name):
 
 
 # метод парсинга времени
-def TimeOfPost(name, number):
+def TimeOfPost():
+    SingInInstagram()
+    name = ui.textEdit.toPlainText()
     file_name = name
     File = open(f'{file_name}/{file_name}_posts.txt', 'r')
     Time = []
@@ -254,10 +275,21 @@ def TimeOfPost(name, number):
     FILE = xlwt.Workbook(f"{file_name}/{file_name}timeOfPost.xls", "rb")
     FiLESheet = FILE.add_sheet('time')
     FILE.save(f"{file_name}/{file_name}timeOfPost.xls")
-    FiLESheet.write(number, 0, name)
+    FiLESheet.write(0, 0, name)
     for date in Time:
         date = date[0:10] + " " + date[11:19]
         date = int(time.mktime(time.strptime('2000-01-01 12:34:00', '%Y-%m-%d %H:%M:%S')))
-        FiLESheet.write(number, T, date)
+        FiLESheet.write(0, T, date)
         T += 1
     FILE.save(f"{file_name}/{file_name}timeOfPost.xls")
+
+
+ui.downloadbutton.clicked.connect(DownLoaderFile)
+ui.downloadbutton.show()
+ui.datasetbutton.clicked.connect(GetFollowers)
+ui.datasetbutton.show()
+ui.Postsbutton.clicked.connect(PutPosts)
+ui.Postsbutton.show()
+ui.pushButton.clicked.connect(TimeOfPost)
+ui.pushButton.show()
+app.exec_()
