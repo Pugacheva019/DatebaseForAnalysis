@@ -5,8 +5,6 @@ import requests
 import xlwt
 import pandas
 import os.path
-import tkinter
-from tkinter import *
 
 browser = webdriver.Chrome("...")
 
@@ -263,42 +261,3 @@ def TimeOfPost(name, number):
         FiLESheet.write(number, T, date)
         T += 1
     FILE.save(f"{file_name}/{file_name}timeOfPost.xls")
-
-
-'''
-SingInInstagram()
-username = "natgeo"
-t = 0
-TimeOfPost(username, t)
-Followers = pandas.read_excel(f"{username}/{username}followers1.xls", 'followers')
-List = Followers.columns.ravel()
-TimePost = pandas.read_excel(f"{username}/{username}timeOfPost.xls", 'time')
-Timing = TimePost.columns.ravel()
-for f in List:
-    print(f)
-    if f != username:
-        PutPosts(f)
-        TimeOfPost(f, t)
-    t += 1
-    TimePost = pandas.read_excel(f"{f}/{f}timeOfPost.xls", 'time')
-browser.close()
-'''
-'''
-username = "natgeo"
-t = 0
-i = 0
-Followers = pandas.read_excel(f"{username}/{username}followers.xls", 'followers')
-List = Followers.columns.ravel()
-FILE = xlwt.Workbook(f"timeOfPost.xls", "wb")
-FILE_Sheet = FILE.add_sheet('time')
-for username in List:
-    TimePost = pandas.read_excel(f"{username}/{username}timeOfPost.xls", 'time')
-    Timing = TimePost.columns.ravel()
-    for data in Timing:
-        FILE_Sheet.write(i, t, data)
-        i += 1
-    t += 1
-'''
-root = Tk()
-root.title("GUI на Python")
-root.geometry("300x250")
