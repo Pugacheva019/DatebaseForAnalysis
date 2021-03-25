@@ -1,16 +1,17 @@
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.keys import Keys
 import time
 import os
 import requests
-import xlwt
-import pandas
 import pandas as pd
 import os.path
 from PyQt5 import QtWidgets
 import sys
 from DataSet import Ui_Dialog
 from bs4 import BeautifulSoup as bs
+import xlsxwriter
+
 
 # front-end
 app = QtWidgets.QApplication(sys.argv)
@@ -24,20 +25,18 @@ Dialog.show()
 def SingInInstagram(browser):
     browser.get("https://www.instagram.com/accounts/login")
     time.sleep(3)
-    browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div["
-                                  "1]/div/label/input").send_keys("knowlenge")
-    browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div["
-                                  "2]/div/label/input").send_keys("Anita2001")
-    browser.find_element_by_xpath("/html/body/div[1]/section/main/div/article/div/div[1]/div/form/div/div[3]").click()
+    email = "knowlenge"
+    password = "Abs1010"
+    emailInput = browser.find_elements_by_css_selector('form input')[0]
+    passwordInput = browser.find_elements_by_css_selector('form input')[1]
+    emailInput.send_keys(email)
+    passwordInput.send_keys(password)
+    passwordInput.send_keys(Keys.ENTER)
     time.sleep(2)
 
 
 # метод составление списка подписчиков
-def GetFollowers(user_name):
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver")
-    SingInInstagram(browser)
+def GetFollowers(user_name, browser):
     time.sleep(2)
     browser.get("https://www.instagram.com/" + user_name)
     time.sleep(4)
@@ -94,9 +93,8 @@ def GetFollowers(user_name):
         followers_urls.append(url)
 
     # сохраняем всех подписчиков пользователя в файл
-    file = xlwt.Workbook(f"{file_name}/{file_name}followers.xls", "rb")
-    FiLESheet = file.add_sheet('followers')
-    file.save(f"{file_name}/{file_name}followers.xls")
+    file = xlsxwriter.Workbook(f"{file_name}/{file_name}followers.xlsx")
+    FiLESheet = file.add_worksheet('followers')
     FiLESheet.write(0, 0, user_name)
     i = 1
     print(followers_urls)
@@ -104,15 +102,11 @@ def GetFollowers(user_name):
         link = link[26:len(link) - 1]
         FiLESheet.write(0, i, link)
         i += 1
-    file.save(f"{file_name}/{file_name}followers.xls")
+    file.close()
     return followers_count
 
 
-def GetFollowing(user_name):
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver")
-    SingInInstagram(browser)
+def GetFollowing(user_name, browser):
     time.sleep(5)
     browser.get("https://www.instagram.com/" + user_name)
     time.sleep(4)
@@ -125,7 +119,7 @@ def GetFollowing(user_name):
     print(f"Пользователь {file_name} успешно найден, начинаем скачивать логины подписчиков!")
     time.sleep(2)
     following_button = browser.find_element_by_xpath(
-        "/html/body/div[1]/section/main/div/ul/li[3]/a")
+        "/html/body/div[1]/section/main/div/header/section/ul/li[3]/a")
     following_count = following_button.text
     following_count = int(following_count.split(' ')[0])
     print(f"Количество подписок: {following_count}")
@@ -136,7 +130,7 @@ def GetFollowing(user_name):
     time.sleep(4)
     following_button.click()
     time.sleep(4)
-    following_ul = browser.find_element_by_xpath("/html/body/div[4]/div/div/div[2]")
+    following_ul = browser.find_element_by_xpath("/html/body/div[5]/div/div/div[2]")
 
     followers_urls = []
     for i in range(0, loops_count):
@@ -166,6 +160,7 @@ def PutPostsSet(user_name, browser):
     time.sleep(4)
     print("Пользователь успешно найден" + user_name)
     time.sleep(2)
+    browser.get("https://www.instagram.com/" + user_name)
     posts_count = str(browser.find_element_by_xpath("/html/body/div[1]/section/main/div/header/section/ul/li["
                                                     "1]/span/span").text)
     if posts_count.find(" ") != -1:
@@ -193,7 +188,6 @@ def PutPostsSet(user_name, browser):
         browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(4)
         print(f"Итерация #{i}")
-
     file_name = user_name
 
     with open(f'{file_name}/{file_name}_posts.txt', 'a') as FILE:
@@ -202,11 +196,7 @@ def PutPostsSet(user_name, browser):
 
 
 # метод собирания ссылок на посты пользователя
-def PutPosts(user_name):
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver")
-    SingInInstagram(browser)
+def PutPosts(user_name, browser):
     time.sleep(5)
     file_name = user_name
     if os.path.exists(f"{file_name}"):  # создаем папку пользователя
@@ -246,22 +236,17 @@ def PutPosts(user_name):
         browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(4)
         print(f"Итерация #{i}")
-
     file_name = user_name
 
     with open(f'{file_name}/{file_name}_posts.txt', 'a') as FILE:
         for post_url in posts_urls:
             FILE.write(post_url + "\n")
     df = pd.DataFrame(posts_urls)
-    df.to_excel(f'{file_name}/{file_name}.xls')
+    df.to_excel(f'{file_name}/{file_name}posts.xlsx')
 
 
 # метод скачивания публикаций
-def DownLoaderFile(user_name):
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver", options=options)
-    SingInInstagram(browser)
+def DownLoaderFile(user_name, browser):
     PutPostsSet(user_name, browser)
     file_name = user_name
     time.sleep(4)
@@ -314,12 +299,8 @@ def DownLoaderFile(user_name):
 
 
 # метод парсинга времени
-def TimeOfPost(user_name):
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver")
-    SingInInstagram(browser)
-    time.sleep(2)
+def TimeOfPost(user_name, browser):
+    time.sleep(5)
     file_name = user_name
     if os.path.exists(f'{file_name}/{file_name}_posts.txt'):
         File = open(f'{file_name}/{file_name}_posts.txt', 'r')
@@ -327,33 +308,31 @@ def TimeOfPost(user_name):
         print("here")
         PutPostsSet(user_name, browser)
         File = open(f'{file_name}/{file_name}_posts.txt', 'r')
-    if os.path.exists(f'{file_name}/{file_name}timeOfPost.xls'):
+    if os.path.exists(f'{file_name}/{file_name}timeOfPost.xlsx'):
         return
     Time = []
     for post_url in File:
         browser.get(post_url)
+        time.sleep(5)
         g = browser.find_element_by_xpath("//time").get_attribute("datetime")
         Time.append(g)
     print(Time)
     T = 1
-    FILE = xlwt.Workbook(f"{file_name}/{file_name}timeOfPost.xls", "rb")
-    FiLESheet = FILE.add_sheet('time')
-    FILE.save(f"{file_name}/{file_name}timeOfPost.xls")
+    FILE = xlsxwriter.Workbook(f"{file_name}/{file_name}timeOfPost.xlsx")
+    FiLESheet = FILE.add_worksheet('time')
+
+    # FILE.save(f"{file_name}/{file_name}timeOfPost.xlsx")
     FiLESheet.write(0, 0, user_name)
     for date in Time:
         date = date[0:10] + " " + date[11:19]
         date = int(time.mktime(time.strptime(date, '%Y-%m-%d %H:%M:%S')))
         FiLESheet.write(0, T, date)
         T += 1
-    FILE.save(f"{file_name}/{file_name}timeOfPost.xls")
-    browser.close()
+    # FILE.save(f"{file_name}/{file_name}timeOfPost.xls")
+    FILE.close()
 
 
-def Comment(user_name):
-    print("comm")
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver", options=options)
+def Comment(user_name, browser):
     file_name = user_name
     if os.path.exists(f'{file_name}/{file_name}_posts.txt'):
         print("file here")
@@ -373,10 +352,11 @@ def Comment(user_name):
             browser.implicitly_wait(10)
         post_url = browser.page_source
         soup = bs(post_url, 'html.parser')
-        comments = soup.find_all('li', {'class': 'gElp9'})
+        comments = soup.find_all('li', {'class': 'gElp9' '_6lAjh '})
         for i in range(len(comments)):
             res = comments[i]
             txt = res.find("span").text
+            print(txt)
             CommentsPost.append(txt)
         if len(CommentsPost) == 0:
             CommentsPost.append('-')
@@ -385,14 +365,10 @@ def Comment(user_name):
     Comments = pd.DataFrame(AllComments)
     time.sleep(1)
     Comments['post'] = url
-    Comments.to_excel(f"{file_name}/{file_name}comment.xls", user_name)
-    browser.close()
+    Comments.to_excel(f"{file_name}/{file_name}comment.xlsx", user_name)
 
 
-def Location(user_name):
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver", options=options)
+def Location(user_name, browser):
     file_name = user_name
     if os.path.exists(f'{file_name}/{file_name}_posts.txt'):
         print("file here")
@@ -419,8 +395,7 @@ def Location(user_name):
     print(Map)
     LocationFile['map'] = Map
     LocationFile['post'] = url
-    LocationFile.to_excel(f"{file_name}/{file_name}location.xls", user_name)
-    browser.close()
+    LocationFile.to_excel(f"{file_name}/{file_name}location.xlsx", user_name)
 
 
 def xpath_exists(browser, url):
@@ -472,74 +447,84 @@ def Format(user_name):
     fpd.to_excel(f"{file_name}/{file_name}format.xls", user_name)
 
 
-def DateSet():
-    user_name = ui.textEdit.toPlainText()
-    options = webdriver.ChromeOptions()
-    options.set_headless(True)
-    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver")
+def DateSet(user_name, browser):
     SingInInstagram(browser)
-    if os.path.exists(f"{user_name}/{user_name}followers.xls"):
-        Followers = pandas.read_excel(f"{user_name}/{user_name}followers.xls", 'followers')
+    if len(user_name) > 20:
+        print("user_name")
+        File = open(f'{user_name}', 'r')
     else:
-        GetFollowers(user_name)
-        Followers = pandas.read_excel(f"{user_name}/{user_name}followers.xls", 'followers')
-    List = Followers.columns.ravel()
-    for f in List:
+        print(200)
+        if os.path.exists(f'{user_name}/{user_name}_following.txt'):
+            File = open(f'{user_name}/{user_name}_following.txt', 'r')
+            print(1)
+        else:
+            GetFollowers(user_name, browser)
+            File = open(f'{user_name}/{user_name}_following.txt', 'r')
+            print(2)
+    for f in File:
         if ui.checkBoxUrl.isChecked():
-            PutPostsSet(f, browser)
+            PutPosts(f, browser)
         if ui.checkBoxTime.isChecked():
             if os.path.exists(f"{f}/{f}_posts.txt"):
-                TimeOfPost(f)
+                TimeOfPost(f, browser)
             else:
                 PutPostsSet(f, browser)
+                TimeOfPost(f, browser)
         if ui.checkBoxDownload.isChecked():
             if os.path.exists(f"{f}/{f}_posts.txt"):
-                DownLoaderFile(f)
+                DownLoaderFile(f, browser)
             else:
                 PutPostsSet(f, browser)
-                DownLoaderFile(f)
+                DownLoaderFile(f, browser)
         if ui.CommentBox.isChecked():
             if os.path.exists(f"{f}/{f}_posts.txt"):
-                Comment(f)
+                Comment(f, browser)
             else:
                 PutPostsSet(f, browser)
-                Comment(f)
+                Comment(f, browser)
         if ui.TagBox.isChecked():
             if os.path.exists(f"{f}/{f}_posts.txt"):
-                Location(f)
+                Location(f, browser)
             else:
                 PutPostsSet(f, browser)
-                Location(f)
-    browser.close()
-    data(user_name)
+                Location(f, browser)
+    # data(user_name)
 
 
 def DataSetButton():
-    user_name = ui.textEdit.toPlainText()
+    user_name = ui.textEdit_2.toPlainText()
+    options = webdriver.ChromeOptions()
+    options.set_headless(True)
+    browser = webdriver.Chrome("/Users/anna/PycharmProjects/DataSet/chromedriver")
+    if len(user_name) == 0:
+        user_name = ui.textEdit.toPlainText()
     if ui.checkBoxDataSet.isChecked():
-        DateSet()
+        DateSet(user_name, browser)
     else:
+        SingInInstagram(browser)
         if ui.CheckBoxFollowers.isChecked():
             print("followers")
-            GetFollowers(user_name)
+            GetFollowers(user_name, browser)
         if ui.checkBoxUrl.isChecked():
             print("posts")
-            PutPosts(user_name)
+            PutPosts(user_name, browser)
         if ui.checkBoxTime.isChecked():
             print("time")
-            TimeOfPost(user_name)
+            TimeOfPost(user_name, browser)
         if ui.checkBoxDownload.isChecked():
-            DownLoaderFile(user_name)
+            DownLoaderFile(user_name, browser)
         if ui.CommentBox.isChecked():
-            Comment(user_name)
+            Comment(user_name, browser)
         if ui.TagBox_2.isChecked():
-            Location(user_name)
+            Location(user_name, browser)
         if ui.CheckBoxFollowers_2.isChecked():
-            GetFollowing(user_name)
+            GetFollowing(user_name, browser)
         if ui.TagBox_3.isChecked():
             Format(user_name)
+        browser.close()
 
 
+"""
 def data(user):
     Followers = pandas.read_excel(f"{user}/{user}followers.xls", 'followers')
     List = Followers.columns.ravel()
@@ -563,7 +548,7 @@ def data(user):
             Information.append(Time)
     df = pd.DataFrame(Information)
     df.to_excel("TimeOfPosts.xls")
-
+"""
 
 # front-end
 ui.DataSetButton_2.clicked.connect(DataSetButton)
